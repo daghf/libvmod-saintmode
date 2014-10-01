@@ -1,12 +1,12 @@
-Source: libvmod-example
+Source: libvmod-saintmode
 Section: web
 Priority: extra
 Maintainer: Lasse Karstensen <lasse@varnish-software.com>
 Build-Depends: debhelper (>= 7), build-essential, python-docutils
 Standards-Version: 3.8.1
-Vcs-Git: git://github.com/varnish/libvmod-example.git
+Vcs-Git: git://github.com/varnish/libvmod-saintmode.git
 
-Package: libvmod-example
+Package: libvmod-saintmode
 Architecture: any
 Depends: varnish (>= 4.0.0), ${misc:Depends}
 Description: Example vmod for Varnish

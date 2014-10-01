@@ -1,5 +1,5 @@
 ============
-vmod_example
+vmod_saintmode
 ============
 
 ----------------------
@@ -14,7 +14,7 @@ Varnish Example Module
 SYNOPSIS
 ========
 
-import example;
+import saintmode;
 
 DESCRIPTION
 ===========
@@ -41,12 +41,12 @@ Description
 Example
         ::
 
-                set resp.http.hello = example.hello("World");
+                set resp.http.hello = saintmode.hello("World");
 
 INSTALLATION
 ============
 
-This is an example skeleton for developing out-of-tree Varnish
+This is an saintmode skeleton for developing out-of-tree Varnish
 vmods available from the 3.0 release. It implements the "Hello, World!" 
 as a vmod callback. Not particularly useful in good hello world 
 tradition,but demonstrates how to get the glue around a vmod working.
@@ -75,20 +75,20 @@ Make targets:
 
 In your VCL you could then use this vmod along the following lines::
         
-        import example;
+        import saintmode;
 
         sub vcl_deliver {
                 # This sets resp.http.hello to "Hello, World"
-                set resp.http.hello = example.hello("World");
+                set resp.http.hello = saintmode.hello("World");
         }
 
 HISTORY
 =======
 
-This manual page was released as part of the libvmod-example package,
+This manual page was released as part of the libvmod-saintmode package,
 demonstrating how to create an out-of-tree Varnish vmod.
 
-For further examples and inspiration check out the vmod directory:
+For further saintmodes and inspiration check out the vmod directory:
 
     https://www.varnish-cache.org/vmods
 
@@ -96,6 +96,6 @@ COPYRIGHT
 =========
 
 This document is licensed under the same license as the
-libvmod-example project. See LICENSE for details.
+libvmod-saintmode project. See LICENSE for details.
 
 * Copyright (c) 2011-2014 Varnish Software
