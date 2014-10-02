@@ -1,15 +1,6 @@
-$Module saintmode 3 Example VMOD
-This is the embedded documentation for the saintmode VMOD. It should
-mention what the vmod is intended to do.
+$Module saintmode 3 Saintmode director
+`vmod_saintmode` enables saintmode functionality for Varnish 4.0
 
-It can span multiple lines and is written in RST format.
-You can even have links and lists in here:
-
-* https://github.com/varnish/libvmod-saintmode/
-* https://www.varnish-cache.org/
-
-
-$Function STRING hello(STRING)
-
-The different functions provided by the VMOD should also have their own
-embedded documentation. This section is for the hello() function.
+$Function BOOL blacklist(DURATION expires)
+$Object saintmode(BACKEND backend, INT threshold)
+$Method BACKEND .backend()
