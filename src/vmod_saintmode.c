@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <pthread.h>
 
 #include "vrt.h"
 #include "cache/cache.h"
@@ -21,6 +22,7 @@ struct vmod_saintmode_saintmode {
 #define VMOD_SAINTMODE_MAGIC	0xa03756e4
 	struct director		sdir[1];
 	const struct director	*be;
+	pthread_mutex_t		mtx;
 	unsigned		threshold;
 	unsigned		n_trouble;
 	VTAILQ_HEAD(, trouble)	troublelist;
@@ -44,11 +46,59 @@ resolve(const struct director *sdir, struct worker *wrk, struct busyobj *bo) {
 	return (NULL);
 }
 
+/* All adapted from PHK's saintmode implementation in Varnish 3.0 */
 unsigned
 healthy(const struct director *dir, struct busyobj *bo, double *changed) {
-	/* ... */
+	struct trouble *tr;
+	struct trouble *tr2;
+	unsigned retval;
+	unsigned int threshold;
+	struct vmod_saintmode_saintmode *sm;
+	VTAILQ_HEAD(, trouble)  troublelist;
+	double now;
 
-	return (0);
+	CHECK_OBJ_NOTNULL(dir, DIRECTOR_MAGIC);
+	CAST_OBJ_NOTNULL(sm, dir->priv, VMOD_SAINTMODE_MAGIC);
+	CHECK_OBJ_NOTNULL(sm->be, DIRECTOR_MAGIC);
+
+	/* If we don't have a bo with a digest to look at, we can't
+	 * know if we are on the trouble list or not. Fall back to the
+	 * backend's healthy() function. */
+	if (!bo)
+		return (sm->be->healthy(sm->be, bo, changed));
+
+	/* Saintmode is disabled, or list is empty */
+	if (sm->threshold == 0 || sm->n_trouble == 0)
+		return (sm->be->healthy(sm->be, bo, changed));
+
+	now = bo->t_first;
+
+	retval = 1;
+	VTAILQ_INIT(&troublelist);
+	pthread_mutex_lock(&sm->mtx);
+	VTAILQ_FOREACH_SAFE(tr, &sm->troublelist, list, tr2) {
+		CHECK_OBJ_NOTNULL(tr, TROUBLE_MAGIC);
+
+		if (tr->timeout < now) {
+			VTAILQ_REMOVE(&sm->troublelist, tr, list);
+			VTAILQ_INSERT_HEAD(&troublelist, tr, list);
+			sm->n_trouble--;
+			continue;
+		}
+
+		if (!memcmp(tr->digest, bo->digest, sizeof tr->digest)) {
+			retval = 0;
+			break;
+		}
+	}
+	if (threshold <= sm->n_trouble)
+		retval = 0;
+	pthread_mutex_unlock(&sm->mtx);
+
+	VTAILQ_FOREACH_SAFE(tr, &troublelist, list, tr2)
+		FREE_OBJ(tr);
+
+	return (retval ? sm->be->healthy(sm->be, bo, changed) : 0);
 }
 
 VCL_VOID
@@ -63,6 +113,8 @@ vmod_saintmode__init(VRT_CTX, struct vmod_saintmode_saintmode **smp,
 	*smp = sm;
 
 	sm->threshold = threshold;
+	sm->n_trouble = 0;
+	AZ(pthread_mutex_init(&sm->mtx, NULL));
 	CHECK_OBJ_NOTNULL(be, DIRECTOR_MAGIC);
 	sm->be = be;
 	VTAILQ_INIT(&sm->troublelist);
@@ -92,5 +144,6 @@ vmod_saintmode__fini(struct vmod_saintmode_saintmode **smp) {
 	}
 
 	free(sm->sdir->vcl_name);
+	AZ(pthread_mutex_destroy(&sm->mtx));
 	FREE_OBJ(sm);
 }
