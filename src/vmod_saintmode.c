@@ -101,6 +101,20 @@ healthy(const struct director *dir, struct busyobj *bo, double *changed) {
 	return (retval ? sm->be->healthy(sm->be, bo, changed) : 0);
 }
 
+static const struct director *
+resolve(const struct director *dir, struct worker *wrk, struct busyobj *bo) {
+	struct vmod_saintmode_saintmode *sm;
+	double changed = 0.0;
+
+	CHECK_OBJ_NOTNULL(dir, DIRECTOR_MAGIC);
+	CAST_OBJ_NOTNULL(sm, dir->priv, VMOD_SAINTMODE_MAGIC);
+
+	if (!healthy(dir, bo, &changed))
+		return (NULL);
+
+	return (sm->be);
+}
+
 VCL_VOID
 vmod_saintmode__init(VRT_CTX, struct vmod_saintmode_saintmode **smp,
     const char *vcl_name, VCL_BACKEND be, VCL_INT threshold) {
