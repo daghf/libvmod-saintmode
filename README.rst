@@ -6,8 +6,8 @@ vmod_saintmode
 Varnish Example Module
 ----------------------
 
-:Author: Martin Blix Grydeland
-:Date: 2011-05-26
+:Author: Dag Haavi Finstad
+:Date: 2014-10-03
 :Version: 1.0
 :Manual section: 3
 
@@ -19,29 +19,111 @@ import saintmode;
 DESCRIPTION
 ===========
 
-Example Varnish vmod demonstrating how to write an out-of-tree Varnish vmod
-for Varnish 3.0 and later.
+This VMOD implements saintmode functionality for Varnish 4.0.
 
-Implements the traditional Hello World as a vmod.
+Saintmode is used by instantiating a 'saintmode' object, and using
+that in place of the decorated backend.
+
+Example::
+
+  backend b0 {
+	.host = "foo";
+	.port = "8080";
+  }
+
+  backend b1 {
+  	.host = "bar";
+  	.port = "8080";
+  }
+
+  sub vcl_init {
+  	# Instantiate sm0, sm1 for backends b0, b1
+  	new sm0 = saintmode.saintmode(b0, 10);
+  	new sm1 = saintmode.saintmode(b1, 10);
+
+	# Add both to a director. Use sm0, sm1 in place of b0, b1
+  	new mydir = directors.random();
+  	mydir.add_backend(sm0.backend(), 1);
+  	mydir.add_backend(sm1.backend(), 1);
+  }
+
+  sub vcl_backend_fetch {
+  	set bereq.backend = mydir.backend();
+  }
+
+  sub vcl_backend_response {
+  	if (beresp.status == 500) {
+  		# This marks the backend as sick for this specific
+  		# object for the next 20s.
+  		saintmode.blacklist(20s);
+  		return (retry);
+  	}
+  }
+
 
 FUNCTIONS
 =========
 
-hello
------
+saintmode.saintmode
+-------------------
 
 Prototype
         ::
 
-                hello(STRING S)
-Return value
-	STRING
+	saintmode.saintmode(BACKEND b, INT threshold)
 Description
-	Returns "Hello, " prepended to S
+	Constructs a saintmode object. The ``threshold`` argument sets
+	the saintmode threshold, which is the maximum number of items
+	that can be blacklisted before the whole backend is regarded
+	as sick. Corresponds with the ``saintmode_threshold`` parameter
+	of Varnish 3.0.
+
 Example
         ::
 
-                set resp.http.hello = saintmode.hello("World");
+                sub vcl_init {
+			new sm = saintmode.saintmode(b, 10);
+		}
+
+
+saintmode.backend()
+-------------------
+
+Prototype
+	::
+	   BACKEND saintmode.backend()
+
+Description
+	Used for assigning the backend from the saintmode object.
+
+Example
+	::
+
+		sub vcl_backend_fetch {
+			set bereq.backend = sm.backend();
+		}
+
+blacklist()
+-----------
+
+Prototype
+	::
+	   VOID blacklist(DURATION expires)
+
+Description
+	Marks the object as sick for a specific object. Used in
+	vcl_backend_response.
+
+Example
+	::
+
+		sub vcl_backend_response {
+			if (beresp.http.broken-app) {
+				saintmode.blacklist(20s);
+				return (retry);
+			}
+
+		}
 
 INSTALLATION
 ============
