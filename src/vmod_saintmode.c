@@ -216,5 +216,9 @@ vmod_saintmode__fini(struct vmod_saintmode_saintmode **smp) {
 
 	free(sm->sdir->vcl_name);
 	AZ(pthread_mutex_destroy(&sm->mtx));
+
+	/* We can no longer refer to the sm_objs after this
+	 * free. Should be fine, as this fini function will be called
+	 * first when the VCL is getting unloaded. */
 	FREE_OBJ(sm);
 }
