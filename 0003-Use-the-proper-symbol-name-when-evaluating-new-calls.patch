@@ -1,0 +1,25 @@
+From 558a2bcecc68ae618834342e6431f42c389c0c66 Mon Sep 17 00:00:00 2001
+From: Dag Haavi Finstad <daghf@varnish-software.com>
+Date: Fri, 3 Oct 2014 15:30:54 +0200
+Subject: [PATCH 3/3] Use the proper symbol name when evaluating 'new' calls.
+
+---
+ lib/libvcc/vcc_action.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/lib/libvcc/vcc_action.c b/lib/libvcc/vcc_action.c
+index 1b0c4b2..c4f984d 100644
+--- a/lib/libvcc/vcc_action.c
++++ b/lib/libvcc/vcc_action.c
+@@ -219,7 +219,7 @@ parse_new(struct vcc *tl)
+ 	vcc_NextToken(tl);
+ 
+ 	bprintf(buf1, ", &vo_%s, \"%s\"", sy1->name, sy1->name);
+-	vcc_Eval_Func(tl, s_init, buf1, "ASDF", s_init + strlen(s_init) + 1);
++	vcc_Eval_Func(tl, s_init, buf1, sy2->name, s_init + strlen(s_init) + 1);
+ 	ifp = New_IniFin(tl);
+ 	VSB_printf(ifp->fin, "\t%s(&vo_%s);", s_fini, sy1->name);
+ 	ExpectErr(tl, ';');
+-- 
+2.1.0
+

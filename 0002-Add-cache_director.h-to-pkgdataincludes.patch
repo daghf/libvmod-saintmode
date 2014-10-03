@@ -1,0 +1,24 @@
+From fa4cb932009c2151e28181143349b74f51db4283 Mon Sep 17 00:00:00 2001
+From: Dag Haavi Finstad <daghf@varnish-software.com>
+Date: Thu, 2 Oct 2014 17:02:23 +0200
+Subject: [PATCH 2/3] Add cache_director.h to pkgdataincludes
+
+---
+ bin/varnishd/Makefile.am | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/bin/varnishd/Makefile.am b/bin/varnishd/Makefile.am
+index fdec53b..6e97946 100644
+--- a/bin/varnishd/Makefile.am
++++ b/bin/varnishd/Makefile.am
+@@ -109,6 +109,7 @@ nobase_pkgdatainclude_HEADERS = \
+ 	cache/cache.h \
+ 	cache/cache_filter.h \
+ 	cache/cache_backend.h \
++	cache/cache_director.h \
+ 	common/common.h \
+ 	common/params.h
+ 
+-- 
+2.1.0
+
