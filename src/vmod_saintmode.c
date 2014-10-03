@@ -55,7 +55,7 @@ find_sm(const struct saintmode_objs *sm_objs,
 	return (NULL);
 }
 
-VCL_BOOL
+VCL_VOID
 vmod_blacklist(VRT_CTX, struct vmod_priv *priv, VCL_DURATION expires) {
 	struct trouble *tp;
 	struct saintmode_objs *sm_objs;
@@ -67,7 +67,7 @@ vmod_blacklist(VRT_CTX, struct vmod_priv *priv, VCL_DURATION expires) {
 	if (!ctx->bo && !ctx->bo->director_resp) {
 		VSLb(ctx->vsl, SLT_VCL_Error, "saintmode.blacklist() called"
 		    " outside of vcl_backend_response");
-		return (0);
+		return;
 	}
 
 	CHECK_OBJ_NOTNULL(ctx->bo, BUSYOBJ_MAGIC);
@@ -76,7 +76,7 @@ vmod_blacklist(VRT_CTX, struct vmod_priv *priv, VCL_DURATION expires) {
 	if (!sm) {
 		VSLb(ctx->vsl, SLT_VCL_Error, "Error: saintmode.blacklist(): "
 		    "Saintmode not configured for this backend.");
-		return (0);
+		return;
 	}
 
 	ALLOC_OBJ(tp, TROUBLE_MAGIC);
@@ -87,8 +87,6 @@ vmod_blacklist(VRT_CTX, struct vmod_priv *priv, VCL_DURATION expires) {
 	VTAILQ_INSERT_HEAD(&sm->troublelist, tp, list);
 	sm->n_trouble++;
 	pthread_mutex_unlock(&sm->mtx);
-
-	return (1);
 }
 
 /* All adapted from PHK's saintmode implementation in Varnish 3.0 */
