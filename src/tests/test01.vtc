@@ -2,21 +2,43 @@ varnishtest "Test saintmode vmod"
 
 server s1 {
        rxreq
-       txresp
+       txresp -hdr "Saint: yes" -hdr "Backend: s1"
+} -start
+
+server s2 {
+       rxreq
+       txresp -hdr "Backend: s2"
 } -start
 
 varnish v1 -vcl+backend {
 	import saintmode from "${vmod_topbuild}/src/.libs/libvmod_saintmode.so";
+	import directors from "${vmoddir}/libvmod_directors.so";
 
-	sub vcl_deliver {
-		set resp.http.hello = saintmode.hello("World");
+	sub vcl_init {
+		new sm1 = saintmode.saintmode(s1, 5);
+		new sm2 = saintmode.saintmode(s2, 5);
+		new fb = directors.fallback();
+		fb.add_backend(sm1.backend());
+		fb.add_backend(sm2.backend());
 	}
+
+	sub vcl_backend_fetch {
+		set bereq.backend = fb.backend();
+	}
+
+	sub vcl_backend_response {
+		if (beresp.http.Saint == "yes") {
+			saintmode.blacklist(2s);
+			return (retry);
+		}
+	}
+
 } -start
 
 client c1 {
 	txreq -url "/"
 	rxresp
-	expect resp.http.hello == "Hello, World"
+	expect resp.http.backend == "s2"
 }
 
 client c1 -run
