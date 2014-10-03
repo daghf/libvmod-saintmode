@@ -18,32 +18,37 @@ struct trouble {
 };
 
 struct vmod_saintmode_saintmode {
-	unsigned		magic;
-#define VMOD_SAINTMODE_MAGIC	0xa03756e4
-	struct director		sdir[1];
-	const struct director	*be;
-	pthread_mutex_t		mtx;
-	unsigned		threshold;
-	unsigned		n_trouble;
-	VTAILQ_HEAD(, trouble)	troublelist;
+	unsigned				magic;
+#define VMOD_SAINTMODE_MAGIC			0xa03756e4
+	struct director				sdir[1];
+	const struct director			*be;
+	pthread_mutex_t				mtx;
+	unsigned				threshold;
+	unsigned				n_trouble;
+	VTAILQ_ENTRY(vmod_saintmode_saintmode)	list;
+	VTAILQ_HEAD(, trouble)			troublelist;
+};
+
+struct saintmode_objs {
+	unsigned				magic;
+#define SAINTMODE_OBJS_MAGIC			0x9aa7beec
+	VTAILQ_HEAD(, vmod_saintmode_saintmode) sm_list;
 };
 
 VCL_BACKEND
 vmod_saintmode_backend(VRT_CTX, struct vmod_saintmode_saintmode *sm) {
-
+	CHECK_OBJ_NOTNULL(sm, VMOD_SAINTMODE_MAGIC);
+	CHECK_OBJ_NOTNULL(sm->sdir, DIRECTOR_MAGIC);
+	return (sm->sdir);
 }
 
 VCL_BOOL
-vmod_blacklist(VRT_CTX, VCL_DURATION expires) {
-	/* since 9ba9a8bb1b40 we can use ctx->bo->director_resp to
-	 * find the offending backend */
-}
+vmod_blacklist(VRT_CTX, struct vmod_priv *priv, VCL_DURATION expires) {
+	CHECK_OBJ_NOTNULL(ctx->bo, BUSYOBJ_MAGIC);
 
-static const struct director *
-resolve(const struct director *sdir, struct worker *wrk, struct busyobj *bo) {
-	/* if bo->digest is on trouble list: sick */
+	/* since 9ba9a8bb1b40 we can use ctx->bo->director_resp (aka
+	 * beresp.backend) to find the offending backend */
 
-	return (NULL);
 }
 
 /* All adapted from PHK's saintmode implementation in Varnish 3.0 */
@@ -117,8 +122,10 @@ resolve(const struct director *dir, struct worker *wrk, struct busyobj *bo) {
 
 VCL_VOID
 vmod_saintmode__init(VRT_CTX, struct vmod_saintmode_saintmode **smp,
-    const char *vcl_name, VCL_BACKEND be, VCL_INT threshold) {
+    const char *vcl_name, struct vmod_priv *priv, VCL_BACKEND be,
+    VCL_INT threshold) {
 	struct vmod_saintmode_saintmode *sm;
+	struct saintmode_objs *sm_objs;
 
 	AN(smp);
 	AZ(*smp);
@@ -139,6 +146,16 @@ vmod_saintmode__init(VRT_CTX, struct vmod_saintmode_saintmode **smp,
 	REPLACE(sm->sdir->vcl_name, vcl_name);
 	sm->sdir->name = "saintmode";
 	sm->sdir->priv = sm;
+
+	if (!priv->priv) {
+		ALLOC_OBJ(sm_objs, SAINTMODE_OBJS_MAGIC);
+		VTAILQ_INIT(&sm_objs->sm_list);
+		priv->priv = sm_objs;
+		priv->free = free;
+	}
+
+	CAST_OBJ_NOTNULL(sm_objs, priv->priv, SAINTMODE_OBJS_MAGIC);
+	VTAILQ_INSERT_TAIL(&sm_objs->sm_list, sm, list);
 }
 
 VCL_VOID
