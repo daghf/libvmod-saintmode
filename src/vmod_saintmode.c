@@ -42,13 +42,53 @@ vmod_saintmode_backend(VRT_CTX, struct vmod_saintmode_saintmode *sm) {
 	return (sm->sdir);
 }
 
+static struct vmod_saintmode_saintmode *
+find_sm(const struct saintmode_objs *sm_objs,
+    const struct director *be) {
+	struct vmod_saintmode_saintmode *sm;
+
+	VTAILQ_FOREACH(sm, &sm_objs->sm_list, list) {
+		if (sm->be == be)
+			return (sm);
+	}
+
+	return (NULL);
+}
+
 VCL_BOOL
 vmod_blacklist(VRT_CTX, struct vmod_priv *priv, VCL_DURATION expires) {
+	struct trouble *tp;
+	struct saintmode_objs *sm_objs;
+	struct vbc *vbc;
+	struct backend *be;
+	struct vmod_saintmode_saintmode *sm;
+
+	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
+	if (!ctx->bo && !ctx->bo->director_resp) {
+		VSLb(ctx->vsl, SLT_VCL_Error, "saintmode.blacklist() called"
+		    " outside of vcl_backend_response");
+		return (0);
+	}
+
 	CHECK_OBJ_NOTNULL(ctx->bo, BUSYOBJ_MAGIC);
+	CAST_OBJ_NOTNULL(sm_objs, priv->priv, SAINTMODE_OBJS_MAGIC);
+	sm = find_sm(sm_objs, ctx->bo->director_resp);
+	if (!sm) {
+		VSLb(ctx->vsl, SLT_VCL_Error, "Error: saintmode.blacklist(): "
+		    "Saintmode not configured for this backend.");
+		return (0);
+	}
 
-	/* since 9ba9a8bb1b40 we can use ctx->bo->director_resp (aka
-	 * beresp.backend) to find the offending backend */
+	ALLOC_OBJ(tp, TROUBLE_MAGIC);
+	AN(tp);
+	memcpy(tp->digest, ctx->bo->digest, sizeof tp->digest);
+	tp->timeout = expires;
+	pthread_mutex_lock(&sm->mtx);
+	VTAILQ_INSERT_HEAD(&sm->troublelist, tp, list);
+	sm->n_trouble++;
+	pthread_mutex_unlock(&sm->mtx);
 
+	return (1);
 }
 
 /* All adapted from PHK's saintmode implementation in Varnish 3.0 */
