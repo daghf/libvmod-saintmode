@@ -61,17 +61,16 @@ index f717aa4..0b5ee0c 100644
 @@ -43,7 +43,8 @@
   */
  
- typedef struct vbc *vdi_getfd_f(const struct director *, struct busyobj *);
+ typedef int vdi_getfd_f(const struct director *, struct busyobj *);
 -typedef unsigned vdi_healthy_f(const struct director *, double *changed);
 +typedef unsigned vdi_healthy_f(const struct director *, struct busyobj *,
 +    double *changed);
  typedef const struct director *vdi_resolve_f(const struct director *,
      struct worker *, struct busyobj *);
  typedef int vdi_gethdrs_f(const struct director *, struct worker *,
-@@ -78,7 +79,7 @@ void VDI_Finish(const struct director *d, struct worker *wrk,
+@@ -78,6 +79,6 @@ void VDI_Finish(const struct director *d, struct worker *wrk,
      struct busyobj *bo);
- struct vbc *VDI_GetFd(const struct director *d, struct worker *wrk,
-     struct busyobj *);
+ int VDI_GetFd(const struct director *d, struct worker *wrk, struct busyobj *);
 -int VDI_Healthy(const struct director *);
 +int VDI_Healthy(const struct director *, struct busyobj *bo);
  struct suckaddr *VDI_Suckaddr(const struct director *d, struct worker *wrk,
