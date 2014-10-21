@@ -7,7 +7,7 @@ Varnish Saintmode Module
 ------------------------
 
 :Author: Dag Haavi Finstad
-:Date: 2014-10-03
+:Date: 2014-10-21
 :Version: 1.0
 :Manual section: 3
 
@@ -26,6 +26,10 @@ Varnish 3.0.
 Saintmode in Varnish 4.0 is implemented as a director VMOD. We
 instantiate a saintmode object and give it a backend as an argument,
 then use that in place of using the backend directly.
+
+NB: This VMOD currently only works with Varnish master branch commit
+9ec96da or later, with the patch provided in file
+0001-Add-a-struct-busyobj-param-to-dir-healthy.patch applied.
 
 Example::
 
