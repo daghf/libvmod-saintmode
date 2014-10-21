@@ -2,9 +2,9 @@
 vmod_saintmode
 ==============
 
-----------------------
-Varnish Example Module
-----------------------
+------------------------
+Varnish Saintmode Module
+------------------------
 
 :Author: Dag Haavi Finstad
 :Date: 2014-10-03
@@ -19,10 +19,13 @@ import saintmode;
 DESCRIPTION
 ===========
 
-This VMOD implements saintmode functionality for Varnish 4.0.
+This VMOD provides saintmode functionality for Varnish 4.0. The code
+is in part based on Poul-Henning Kamp's saintmode implementation in
+Varnish 3.0.
 
-Saintmode is used by instantiating a 'saintmode' object, and using
-that in place of the decorated backend.
+Saintmode in Varnish 4.0 is implemented as a director VMOD. We
+instantiate a saintmode object and give it a backend as an argument,
+then use that in place of using the backend directly.
 
 Example::
 
@@ -68,62 +71,67 @@ saintmode.saintmode
 -------------------
 
 Prototype
-        ::
+::
 
 	saintmode.saintmode(BACKEND b, INT threshold)
+
 Description
-	Constructs a saintmode object. The ``threshold`` argument sets
-	the saintmode threshold, which is the maximum number of items
-	that can be blacklisted before the whole backend is regarded
-	as sick. Corresponds with the ``saintmode_threshold`` parameter
-	of Varnish 3.0.
+	Constructs a saintmode director object. The ``threshold``
+	argument sets the saintmode threshold, which is the maximum
+	number of items that can be blacklisted before the whole
+	backend is regarded as sick. Corresponds with the
+	``saintmode_threshold`` parameter of Varnish 3.0.
 
 Example
-        ::
+::
 
-                sub vcl_init {
-			new sm = saintmode.saintmode(b, 10);
-		}
+        sub vcl_init {
+		new sm = saintmode.saintmode(b, 10);
+	}
 
 
 saintmode.backend()
 -------------------
 
 Prototype
-	::
-	   BACKEND saintmode.backend()
+::
+
+	BACKEND saintmode.backend()
 
 Description
 	Used for assigning the backend from the saintmode object.
 
 Example
-	::
+::
 
-		sub vcl_backend_fetch {
-			set bereq.backend = sm.backend();
-		}
+	sub vcl_backend_fetch {
+		set bereq.backend = sm.backend();
+	}
 
 blacklist()
 -----------
 
 Prototype
-	::
-	   VOID blacklist(DURATION expires)
+::
+
+	VOID blacklist(DURATION expires)
 
 Description
-	Marks the object as sick for a specific object. Used in
+	Marks the backend as sick for a specific object. Used in
+	vcl_backend_response. Corresponds to the use of
+	``beresp.saintmode`` in Varnish 3.0. Only available in
 	vcl_backend_response.
 
 Example
-	::
+::
 
-		sub vcl_backend_response {
-			if (beresp.http.broken-app) {
-				saintmode.blacklist(20s);
-				return (retry);
-			}
-
+	sub vcl_backend_response {
+		if (beresp.http.broken-app) {
+			saintmode.blacklist(20s);
+			return (retry);
 		}
+
+	}
 
 INSTALLATION
 ============
