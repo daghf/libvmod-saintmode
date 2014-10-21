@@ -2,43 +2,93 @@ varnishtest "Test saintmode vmod"
 
 server s1 {
        rxreq
-       txresp -hdr "Saint: yes" -hdr "Backend: s1"
-} -start
+       expect req.url == "/a"
+       txresp -hdr "Saint: yes"
 
-server s2 {
+       accept
        rxreq
-       txresp -hdr "Backend: s2"
+       expect req.url == "/b"
+       txresp
+
+       rxreq
+       expect req.url == "/a"
+       txresp
+
+       rxreq
+       expect req.url == "/sick-0"
+       txresp -hdr "Saint: yes"
+
+       accept
+       rxreq
+       expect req.url == "/sick-1"
+       txresp -hdr "Saint: yes"
+
+       accept
+       rxreq
+       expect req.url == "/sick-2"
+       txresp -hdr "Saint: yes"
 } -start
 
 varnish v1 -vcl+backend {
 	import saintmode from "${vmod_topbuild}/src/.libs/libvmod_saintmode.so";
-	import directors from "${vmoddir}/libvmod_directors.so";
 
 	sub vcl_init {
-		new sm1 = saintmode.saintmode(s1, 5);
-		new sm2 = saintmode.saintmode(s2, 5);
-		new fb = directors.fallback();
-		fb.add_backend(sm1.backend());
-		fb.add_backend(sm2.backend());
+		new sm = saintmode.saintmode(s1, 3);
+	}
+
+	sub vcl_recv {
+		return (pass);
 	}
 
 	sub vcl_backend_fetch {
-		set bereq.backend = fb.backend();
+		set bereq.backend = sm.backend();
 	}
 
 	sub vcl_backend_response {
 		if (beresp.http.Saint == "yes") {
-			saintmode.blacklist(2s);
-			return (retry);
+			saintmode.blacklist(0.5s);
+			return (retry); # -> 503
 		}
 	}
 
 } -start
 
 client c1 {
-	txreq -url "/"
+	txreq -url "/a"
 	rxresp
-	expect resp.http.backend == "s2"
+	expect resp.status == 503
+
+	# Should fail outright due to /a being on troublelist
+	txreq -url "/a"
+	rxresp
+	expect resp.status == 503
+
+	txreq -url "/b"
+	rxresp
+	expect resp.status == 200
+
+	delay 0.5
+
+	txreq -url "/a"
+	rxresp
+	expect resp.status == 200
+
+	txreq -url "/sick-0"
+	rxresp
+	expect resp.status == 503
+
+	txreq -url "/sick-1"
+	rxresp
+	expect resp.status == 503
+
+	txreq -url "/sick-2"
+	rxresp
+	expect resp.status == 503
+
+	# saintmode threshold reached - should report 503 for all reqs
+	txreq -url "/foo"
+	rxresp
+	expect resp.status == 503
 }
 
 client c1 -run

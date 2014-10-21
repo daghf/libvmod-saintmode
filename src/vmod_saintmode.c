@@ -35,7 +35,7 @@ struct saintmode_objs {
 	VTAILQ_HEAD(, vmod_saintmode_saintmode) sm_list;
 };
 
-VCL_BACKEND
+VCL_BACKEND __match_proto__(td_saintmode_saintmode_backend)
 vmod_saintmode_backend(VRT_CTX, struct vmod_saintmode_saintmode *sm) {
 	CHECK_OBJ_NOTNULL(sm, VMOD_SAINTMODE_MAGIC);
 	CHECK_OBJ_NOTNULL(sm->sdir, DIRECTOR_MAGIC);
@@ -47,7 +47,12 @@ find_sm(const struct saintmode_objs *sm_objs,
     const struct director *be) {
 	struct vmod_saintmode_saintmode *sm;
 
+	CHECK_OBJ_NOTNULL(sm_objs, SAINTMODE_OBJS_MAGIC);
+	CHECK_OBJ_NOTNULL(be, DIRECTOR_MAGIC);
+
 	VTAILQ_FOREACH(sm, &sm_objs->sm_list, list) {
+		CHECK_OBJ_NOTNULL(sm, VMOD_SAINTMODE_MAGIC);
+		CHECK_OBJ_NOTNULL(sm->be, DIRECTOR_MAGIC);
 		if (sm->be == be)
 			return (sm);
 	}
@@ -55,7 +60,7 @@ find_sm(const struct saintmode_objs *sm_objs,
 	return (NULL);
 }
 
-VCL_VOID
+VCL_VOID __match_proto__(td_saintmode_blacklist)
 vmod_blacklist(VRT_CTX, struct vmod_priv *priv, VCL_DURATION expires) {
 	struct trouble *tp;
 	struct saintmode_objs *sm_objs;
@@ -82,7 +87,7 @@ vmod_blacklist(VRT_CTX, struct vmod_priv *priv, VCL_DURATION expires) {
 	ALLOC_OBJ(tp, TROUBLE_MAGIC);
 	AN(tp);
 	memcpy(tp->digest, ctx->bo->digest, sizeof tp->digest);
-	tp->timeout = expires;
+	tp->timeout = ctx->bo->t_prev + expires;
 	pthread_mutex_lock(&sm->mtx);
 	VTAILQ_INSERT_HEAD(&sm->troublelist, tp, list);
 	sm->n_trouble++;
@@ -90,12 +95,11 @@ vmod_blacklist(VRT_CTX, struct vmod_priv *priv, VCL_DURATION expires) {
 }
 
 /* All adapted from PHK's saintmode implementation in Varnish 3.0 */
-unsigned
+unsigned __match_proto__(vdi_healthy)
 healthy(const struct director *dir, struct busyobj *bo, double *changed) {
 	struct trouble *tr;
 	struct trouble *tr2;
 	unsigned retval;
-	unsigned int threshold;
 	struct vmod_saintmode_saintmode *sm;
 	VTAILQ_HEAD(, trouble)  troublelist;
 	double now;
@@ -114,8 +118,7 @@ healthy(const struct director *dir, struct busyobj *bo, double *changed) {
 	if (sm->threshold == 0 || sm->n_trouble == 0)
 		return (sm->be->healthy(sm->be, bo, changed));
 
-	now = bo->t_first;
-
+	now = bo->t_prev;
 	retval = 1;
 	VTAILQ_INIT(&troublelist);
 	pthread_mutex_lock(&sm->mtx);
@@ -134,7 +137,7 @@ healthy(const struct director *dir, struct busyobj *bo, double *changed) {
 			break;
 		}
 	}
-	if (threshold <= sm->n_trouble)
+	if (sm->threshold <= sm->n_trouble)
 		retval = 0;
 	pthread_mutex_unlock(&sm->mtx);
 
@@ -144,7 +147,7 @@ healthy(const struct director *dir, struct busyobj *bo, double *changed) {
 	return (retval ? sm->be->healthy(sm->be, bo, changed) : 0);
 }
 
-static const struct director *
+static const struct director *  __match_proto__(vdi_resolve_f)
 resolve(const struct director *dir, struct worker *wrk, struct busyobj *bo) {
 	struct vmod_saintmode_saintmode *sm;
 	double changed = 0.0;
@@ -158,7 +161,7 @@ resolve(const struct director *dir, struct worker *wrk, struct busyobj *bo) {
 	return (sm->be);
 }
 
-VCL_VOID
+VCL_VOID  __match_proto__(td_saintmode_saintmode__init)
 vmod_saintmode__init(VRT_CTX, struct vmod_saintmode_saintmode **smp,
     const char *vcl_name, struct vmod_priv *priv, VCL_BACKEND be,
     VCL_INT threshold) {
@@ -196,7 +199,7 @@ vmod_saintmode__init(VRT_CTX, struct vmod_saintmode_saintmode **smp,
 	VTAILQ_INSERT_TAIL(&sm_objs->sm_list, sm, list);
 }
 
-VCL_VOID
+VCL_VOID __match_proto__(td_saintmode_saintmode__fini)
 vmod_saintmode__fini(struct vmod_saintmode_saintmode **smp) {
 	struct trouble *tr, *tr2;
 	struct vmod_saintmode_saintmode *sm;
