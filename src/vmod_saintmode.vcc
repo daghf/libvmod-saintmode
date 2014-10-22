@@ -1,6 +1,8 @@
 $Module saintmode 3 Saintmode director
 `vmod_saintmode` enables saintmode functionality for Varnish 4.0
 
+# See README.rst for documentation
+
 $Function VOID blacklist(PRIV_VCL, DURATION expires)
 $Object saintmode(PRIV_VCL, BACKEND backend, INT threshold)
 $Method BACKEND .backend()

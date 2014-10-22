@@ -23,13 +23,22 @@ This VMOD provides saintmode functionality for Varnish 4.0. The code
 is in part based on Poul-Henning Kamp's saintmode implementation in
 Varnish 3.0.
 
+Saintmode lets you deal with a backend that is failing in random ways
+for specific requests. It maintains a blacklist per backend, marking
+the backend as sick for specific objects. When the number of objects
+marked as sick for a backend reaches a set threshold, the backend is
+considered sick for all requests. Each blacklisted object carries a
+TTL, which denotes the time it will stay blacklisted.
+
 Saintmode in Varnish 4.0 is implemented as a director VMOD. We
-instantiate a saintmode object and give it a backend as an argument,
-then use that in place of using the backend directly.
+instantiate a saintmode object and give it a backend as an
+argument. The resulting object can then be used in place of the
+backend, with the effect that it also has added saintmode
+capabilities.
 
 NB: This VMOD currently only works with Varnish master branch commit
 9ec96da or later, with the patch provided in file
-0001-Add-a-struct-busyobj-param-to-dir-healthy.patch applied.
+``0001-Add-a-struct-busyobj-param-to-dir-healthy.patch applied``.
 
 Example::
 
