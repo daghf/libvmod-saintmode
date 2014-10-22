@@ -38,7 +38,7 @@ capabilities.
 
 NB: This VMOD currently only works with Varnish master branch commit
 9ec96da or later, with the patch provided in file
-``0001-Add-a-struct-busyobj-param-to-dir-healthy.patch applied``.
+``0001-Add-a-struct-busyobj-param-to-dir-healthy.patch`` applied.
 
 Example::
 
