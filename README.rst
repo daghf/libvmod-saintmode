@@ -7,7 +7,7 @@ Varnish Saintmode Module
 ------------------------
 
 :Author: Dag Haavi Finstad
-:Date: 2014-10-21
+:Date: 2014-10-28
 :Version: 1.0
 :Manual section: 3
 
@@ -37,8 +37,8 @@ backend, with the effect that it also has added saintmode
 capabilities.
 
 NB: This VMOD currently only works with Varnish master branch commit
-9ec96da or later, with the patch provided in file
-``0001-Add-a-struct-busyobj-param-to-dir-healthy.patch`` applied.
+418cea5 or later. The required patches will be part of the next
+Varnish 4.0 release.
 
 Example::
 

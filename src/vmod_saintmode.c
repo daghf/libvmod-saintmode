@@ -95,8 +95,8 @@ vmod_blacklist(VRT_CTX, struct vmod_priv *priv, VCL_DURATION expires) {
 }
 
 /* All adapted from PHK's saintmode implementation in Varnish 3.0 */
-unsigned __match_proto__(vdi_healthy)
-healthy(const struct director *dir, struct busyobj *bo, double *changed) {
+unsigned __match_proto__(vdi_healthy_f)
+healthy(const struct director *dir, const struct busyobj *bo, double *changed) {
 	struct trouble *tr;
 	struct trouble *tr2;
 	unsigned retval;
