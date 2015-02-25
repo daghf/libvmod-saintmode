@@ -37,8 +37,8 @@ backend, with the effect that it also has added saintmode
 capabilities.
 
 NB: This VMOD currently only works with Varnish master branch commit
-418cea5 or later. The required patches will be part of the next
-Varnish 4.0 release.
+418cea5 or later. The required patches will be part of the upcoming
+Varnish 4.1.0 release.
 
 Example::
 
