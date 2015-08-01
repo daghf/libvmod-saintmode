@@ -19,9 +19,9 @@ import saintmode;
 DESCRIPTION
 ===========
 
-This VMOD provides saintmode functionality for Varnish 4.0. The code
-is in part based on Poul-Henning Kamp's saintmode implementation in
-Varnish 3.0.
+This VMOD provides saintmode functionality for Varnish master branch
+commit 418cea5 or later and the upcoming 4.1.0 release. The code is in
+part based on Poul-Henning Kamp's saintmode implementation in Varnish 3.0.
 
 Saintmode lets you deal with a backend that is failing in random ways
 for specific requests. It maintains a blacklist per backend, marking
@@ -30,15 +30,11 @@ marked as sick for a backend reaches a set threshold, the backend is
 considered sick for all requests. Each blacklisted object carries a
 TTL, which denotes the time it will stay blacklisted.
 
-Saintmode in Varnish 4.0 is implemented as a director VMOD. We
+Saintmode in Varnish 4.1.0 is implemented as a director VMOD. We
 instantiate a saintmode object and give it a backend as an
 argument. The resulting object can then be used in place of the
 backend, with the effect that it also has added saintmode
 capabilities.
-
-NB: This VMOD currently only works with Varnish master branch commit
-418cea5 or later. The required patches will be part of the upcoming
-Varnish 4.1.0 release.
 
 Example::
 
@@ -149,51 +145,19 @@ Example
 INSTALLATION
 ============
 
-This is an saintmode skeleton for developing out-of-tree Varnish
-vmods available from the 3.0 release. It implements the "Hello, World!" 
-as a vmod callback. Not particularly useful in good hello world 
-tradition,but demonstrates how to get the glue around a vmod working.
-
 The source tree is based on autotools to configure the building, and
 does also have the necessary bits in place to do functional unit tests
 using the varnishtest tool.
 
 Usage::
 
- ./configure VARNISHSRC=DIR [VMODDIR=DIR]
-
-`VARNISHSRC` is the directory of the Varnish source tree for which to
-compile your vmod. Both the `VARNISHSRC` and `VARNISHSRC/include`
-will be added to the include search paths for your module.
-
-Optionally you can also set the vmod install directory by adding
-`VMODDIR=DIR` (defaults to the pkg-config discovered directory from your
-Varnish installation).
+ ./configure
 
 Make targets:
 
 * make - builds the vmod
-* make install - installs your vmod in `VMODDIR`
+* make install - installs your vmod
 * make check - runs the unit tests in ``src/tests/*.vtc``
-
-In your VCL you could then use this vmod along the following lines::
-        
-        import saintmode;
-
-        sub vcl_deliver {
-                # This sets resp.http.hello to "Hello, World"
-                set resp.http.hello = saintmode.hello("World");
-        }
-
-HISTORY
-=======
-
-This manual page was released as part of the libvmod-saintmode package,
-demonstrating how to create an out-of-tree Varnish vmod.
-
-For further saintmodes and inspiration check out the vmod directory:
-
-    https://www.varnish-cache.org/vmods
 
 COPYRIGHT
 =========
