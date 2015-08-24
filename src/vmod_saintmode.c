@@ -4,8 +4,6 @@
 
 #include "vrt.h"
 #include "cache/cache.h"
-#include "cache/cache_director.h"
-#include "cache/cache_backend.h"
 
 #include "vcc_if.h"
 
