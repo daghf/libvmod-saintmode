@@ -19,9 +19,9 @@ import saintmode;
 DESCRIPTION
 ===========
 
-This VMOD provides saintmode functionality for Varnish master branch
-commit 418cea5 or later and the upcoming 4.1.0 release. The code is in
-part based on Poul-Henning Kamp's saintmode implementation in Varnish 3.0.
+This VMOD provides saintmode functionality for Varnish Cache 4.1.0 and
+newer. The code is in part based on Poul-Henning Kamp's saintmode
+implementation in Varnish 3.0.
 
 Saintmode lets you deal with a backend that is failing in random ways
 for specific requests. It maintains a blacklist per backend, marking
