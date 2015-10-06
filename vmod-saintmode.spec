@@ -1,42 +1,39 @@
-Summary: Example VMOD for Varnish
-Name: vmod-varnish-%{VARNISHVER}-saintmode
+Summary: Saint mode support for Varnish Cache
+Name: vmod-saintmode
 Version: 0.1
 Release: 1%{?dist}
 License: BSD
 Group: System Environment/Daemons
-Source0: libvmod-saintmode.tar.gz
+Source0: libvmod-saintmode-trunk.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
-Requires: varnish > 4.0
+Requires: varnish >= 4.0.2
 BuildRequires: make
 BuildRequires: python-docutils
-BuildRequires: varnish-libs-devel
+BuildRequires: varnish >= 4.0.2
+BuildRequires: varnish-libs-devel >= 4.0.2
 
 %description
-Example VMOD
+Saint mode support for Varnish Cache.
 
 %prep
-%setup -n libvmod-saintmode
+%setup -n libvmod-saintmode-trunk
 
 %build
-# this assumes that VARNISHSRC is defined on the rpmbuild command line, like this:
-# rpmbuild -bb --define 'VARNISHSRC /home/user/rpmbuild/BUILD/varnish-3.0.3' redhat/*spec
-./configure VARNISHSRC=%{VARNISHSRC} VMODDIR="$(PKG_CONFIG_PATH=%{VARNISHSRC} pkg-config --variable=vmoddir varnishapi)" --prefix=/usr/
-make
-make check
+%configure --prefix=/usr/
+%{__make} %{?_smp_mflags}
+%{__make} %{?_smp_mflags} check
 
 %install
-make install DESTDIR=%{buildroot}
-mkdir -p %{buildroot}/usr/share/doc/%{name}/
-cp README.rst %{buildroot}/usr/share/doc/%{name}/
-cp LICENSE %{buildroot}/usr/share/doc/%{name}/
+[ %{buildroot} != "/" ] && %{__rm} -rf %{buildroot}
+%{__make} install DESTDIR=%{buildroot}
 
 %clean
-rm -rf %{buildroot}
+[ %{buildroot} != "/" ] && %{__rm} -rf %{buildroot}
 
 %files
 %defattr(-,root,root,-)
-%{_libdir}/varnish/vmods/
-%doc /usr/share/doc/%{name}/*
+%{_libdir}/varnis*/vmods/
+%doc /usr/share/doc/lib%{name}/*
 %{_mandir}/man?/*
 
 %changelog

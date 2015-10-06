@@ -2,7 +2,9 @@ ACLOCAL_AMFLAGS = -I m4
 
 SUBDIRS = src
 
-EXTRA_DIST = README.rst
+EXTRA_DIST = README.rst vmod-saintmode.spec LICENSE
+
+doc_DATA = README.rst LICENSE
 
 dist_man_MANS = vmod_saintmode.3
 MAINTAINERCLEANFILES = $(dist_man_MANS)
